@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e09">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Chain of Command</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <div id="rank"></div>
+    <div id="sp">0</div>
+    <div id="sps" class="dim">0 supplies / sec</div>
+  </header>
+
+  <main>
+    <section id="tab-drill" class="tab on">
+      <div class="drillwrap">
+        <button id="drill" aria-label="Drill"><span class="star">★</span><span class="lbl">DRILL</span><span id="tapval" class="tv">+1</span></button>
+      </div>
+      <div id="dispatch" class="dispatch"></div>
+      <div id="quick" class="quick"></div>
+    </section>
+    <section id="tab-barracks" class="tab">
+      <div class="modes" id="modes"></div>
+      <div id="units"></div>
+    </section>
+    <section id="tab-armory" class="tab"><div id="ups"></div></section>
+    <section id="tab-ops" class="tab"><div id="missions"></div></section>
+    <section id="tab-command" class="tab"><div id="command"></div></section>
+  </main>
+
+  <nav id="nav">
+    <button data-tab="drill" class="on"><i>★</i>Drill</button>
+    <button data-tab="barracks"><i>🏕️</i>Barracks</button>
+    <button data-tab="armory"><i>🔩</i>Armory</button>
+    <button data-tab="ops"><i>🗺️</i>Ops</button>
+    <button data-tab="command"><i>🎖️</i>Command</button>
+  </nav>
+</div>
+<div id="toast"></div>
+<div id="modal" hidden></div>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
