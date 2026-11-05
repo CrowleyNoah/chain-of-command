@@ -67,24 +67,65 @@
     { id: 'campaign', name: 'Full Campaign',  secs: 1800, rewardSecs: 20000, min: 4000, unlock: 5e7, desc: 'Half an hour. Make some coffee.' }
   ];
 
+  /* ---- honors shop: you earn Honors when promoted (same number as medals) and spend them on permanent perks ---- */
+  const PERKS = [
+    { id: 'vet',   name: 'Veteran Recruits', emoji: '🪖', max: 5, cost: (l) => l + 1,  desc: (l) => 'Each new tour starts with ' + (10 * (l + 1)) + ' Recruits.' },
+    { id: 'quart', name: 'Quartermaster',    emoji: '📦', max: 5, cost: (l) => l + 1,  desc: (l) => 'Troops cost ' + (4 * (l + 1)) + '% less.' },
+    { id: 'dsgt',  name: 'Drill Sergeant',   emoji: '📣', max: 5, cost: (l) => l + 1,  desc: (l) => 'Drilling gives +' + (40 * (l + 1)) + '%.' },
+    { id: 'leave', name: 'Leave Policy',     emoji: '🏖️', max: 4, cost: (l) => l + 2,  desc: (l) => 'Troops work ' + (50 + 10 * (l + 1)) + '% pace while you are away.' },
+    { id: 'long',  name: 'Long Watch',       emoji: '🌙', max: 3, cost: (l) => 2 * (l + 1), desc: (l) => 'Away earnings last up to ' + (8 + 2 * (l + 1)) + ' hours.' },
+    { id: 'sig',   name: 'Signal Corps',     emoji: '📡', max: 3, cost: (l) => l + 2,  desc: (l) => 'Field orders arrive sooner and last ' + (15 * (l + 1)) + 's longer.' },
+    { id: 'auto',  name: 'Auto-Recruiter',   emoji: '🤖', max: 1, cost: () => 6,       desc: () => 'Automatically hires the best-value troops, spending up to 40% of your supplies at a time. Toggle it in Settings.' },
+    { id: 'cour',  name: 'Field Courier',    emoji: '🏍️', max: 1, cost: () => 5,       desc: () => 'Collects finished missions and sends the same one out again. Toggle it in Settings.' },
+    { id: 'net',   name: 'Crate Net',        emoji: '🕸️', max: 1, cost: () => 4,       desc: () => 'Supply crates are caught for you at 60% value. Tap them yourself for the full amount.' }
+  ];
+  const perkLvl = (s, id) => (s.perks && s.perks[id]) || 0;
+
+  /* ---- field orders: limited-time boosts you accept from a banner ---- */
+  const EVENTS = [
+    { id: 'air',  name: 'Air Support Inbound', emoji: '🚁', secs: 30, prod: 3,  tap: 1,  text: 'Everything produces 3x' },
+    { id: 'rat',  name: 'Double Rations',      emoji: '🥫', secs: 60, prod: 2,  tap: 1,  text: 'Everything produces 2x' },
+    { id: 'rally', name: 'Rally Cry',          emoji: '📣', secs: 20, prod: 1,  tap: 10, text: 'Drilling gives 10x' },
+    { id: 'intel', name: 'Intel Windfall',     emoji: '🗂️', secs: 0,  prod: 1,  tap: 1,  text: 'Instantly collect 10 minutes of income', instant: 600 }
+  ];
+
+  /* ---- daily visit rewards (a visit just adds up, nothing is ever lost by skipping a day) ---- */
+  const DAILY_SECS = [600, 900, 1200, 1800, 2400, 3600, 7200];
+
   /* ---- achievements ---- */
   const ACHIEVEMENTS = [
-    { id: 'tap1',   name: 'Reporting for Duty',  desc: 'Drill for the first time.',        test: (s) => s.taps >= 1 },
-    { id: 'tap100', name: 'Trigger Finger',      desc: 'Drill 100 times.',                 test: (s) => s.taps >= 100 },
-    { id: 'tap1k',  name: 'Blister Pack',        desc: 'Drill 1,000 times.',               test: (s) => s.taps >= 1000 },
-    { id: 'rec10',  name: 'Squad Up',            desc: 'Own 10 Recruits.',                 test: (s) => s.units[0] >= 10 },
-    { id: 'rec50',  name: 'Platoon',             desc: 'Own 50 Recruits.',                 test: (s) => s.units[0] >= 50 },
-    { id: 'rif25',  name: 'Rifle Club',          desc: 'Own 25 Riflemen.',                 test: (s) => s.units[1] >= 25 },
-    { id: 'arms',   name: 'Combined Arms',       desc: 'Own the first five unit types at once.', test: (s) => s.units.slice(0, 5).every((n) => n >= 1) },
-    { id: 'm1',     name: 'Payday',              desc: 'Earn 1 million supplies in total.', test: (s) => s.life >= 1e6 },
-    { id: 'm2',     name: 'Defense Budget',      desc: 'Earn 1 billion supplies in total.', test: (s) => s.life >= 1e9 },
-    { id: 'm3',     name: 'Trillion Dollar Budget', desc: 'Earn 1 trillion supplies in total.', test: (s) => s.life >= 1e12 },
-    { id: 'pro1',   name: 'Promoted!',           desc: 'Earn your first promotion.',       test: (s) => s.promos >= 1 },
-    { id: 'pro5',   name: 'Career Soldier',      desc: 'Get promoted 5 times.',            test: (s) => s.promos >= 5 },
-    { id: 'mis5',   name: 'Mission Control',     desc: 'Complete 5 missions.',             test: (s) => s.missionsDone >= 5 },
-    { id: 'crate5', name: 'Supply Hawk',         desc: 'Catch 5 supply crates.',           test: (s) => s.crates >= 5 },
-    { id: 'navy',   name: 'Naval Power',         desc: 'Own an Aircraft Carrier.',         test: (s) => s.units[8] >= 1 },
-    { id: 'space',  name: 'Space Force',         desc: 'Own an Orbital Command.',          test: (s) => s.units[9] >= 1 }
+    { id: 'tap1',   emoji: '🫡', name: 'Reporting for Duty',  desc: 'Drill for the first time.',        test: (s) => s.taps >= 1 },
+    { id: 'tap100', emoji: '👆', name: 'Trigger Finger',      desc: 'Drill 100 times.',                 test: (s) => s.taps >= 100 },
+    { id: 'tap1k',  emoji: '🩹', name: 'Blister Pack',        desc: 'Drill 1,000 times.',               test: (s) => s.taps >= 1000 },
+    { id: 'tap10k', emoji: '🦾', name: 'Iron Thumb',          desc: 'Drill 10,000 times.',              test: (s) => s.taps >= 10000 },
+    { id: 'rec10',  emoji: '🪖', name: 'Squad Up',            desc: 'Own 10 Recruits.',                 test: (s) => s.units[0] >= 10 },
+    { id: 'rec50',  emoji: '👥', name: 'Platoon',             desc: 'Own 50 Recruits.',                 test: (s) => s.units[0] >= 50 },
+    { id: 'rif25',  emoji: '🎖️', name: 'Rifle Club',          desc: 'Own 25 Riflemen.',                 test: (s) => s.units[1] >= 25 },
+    { id: 'arms',   emoji: '🧩', name: 'Combined Arms',       desc: 'Own the first five unit types at once.', test: (s) => s.units.slice(0, 5).every((n) => n >= 1) },
+    { id: 'air1',   emoji: '🚁', name: 'Air Cavalry',         desc: 'Own a Helicopter.',                test: (s) => s.units[6] >= 1 },
+    { id: 'jet1',   emoji: '✈️', name: 'Mach Speed',          desc: 'Own a Fighter Jet.',               test: (s) => s.units[7] >= 1 },
+    { id: 'navy',   emoji: '🚢', name: 'Naval Power',         desc: 'Own an Aircraft Carrier.',         test: (s) => s.units[8] >= 1 },
+    { id: 'space',  emoji: '🛰️', name: 'Space Force',         desc: 'Own an Orbital Command.',          test: (s) => s.units[9] >= 1 },
+    { id: 'c100',   emoji: '💯', name: 'Century Club',        desc: 'Own 100 of any single unit.',      test: (s) => s.units.some((n) => n >= 100) },
+    { id: 'ms10',   emoji: '🎉', name: 'Milestone Maker',     desc: 'Reach 10 unit milestones.',        test: (s) => s.milestones >= 10 },
+    { id: 'm1',     emoji: '💰', name: 'Payday',              desc: 'Earn 1 million supplies in total.', test: (s) => s.life >= 1e6 },
+    { id: 'm2',     emoji: '🏦', name: 'Defense Budget',      desc: 'Earn 1 billion supplies in total.', test: (s) => s.life >= 1e9 },
+    { id: 'm3',     emoji: '🏛️', name: 'Trillion Dollar Budget', desc: 'Earn 1 trillion supplies in total.', test: (s) => s.life >= 1e12 },
+    { id: 'm4',     emoji: '🌌', name: 'Beyond Counting',     desc: 'Earn 1 quadrillion supplies in total.', test: (s) => s.life >= 1e15 },
+    { id: 'pro1',   emoji: '⭐', name: 'Promoted!',           desc: 'Earn your first promotion.',       test: (s) => s.promos >= 1 },
+    { id: 'pro5',   emoji: '🌟', name: 'Career Soldier',      desc: 'Get promoted 5 times.',            test: (s) => s.promos >= 5 },
+    { id: 'pro15',  emoji: '🏅', name: 'Lifer',               desc: 'Get promoted 15 times.',           test: (s) => s.promos >= 15 },
+    { id: 'mis5',   emoji: '🗺️', name: 'Mission Control',     desc: 'Complete 5 missions.',             test: (s) => s.missionsDone >= 5 },
+    { id: 'mis25',  emoji: '🧭', name: 'Field Marshal',       desc: 'Complete 25 missions.',            test: (s) => s.missionsDone >= 25 },
+    { id: 'crate5', emoji: '📦', name: 'Supply Hawk',         desc: 'Catch 5 supply crates.',           test: (s) => s.crates >= 5 },
+    { id: 'crate25', emoji: '🦅', name: 'Eagle Eye',          desc: 'Catch 25 supply crates.',          test: (s) => s.crates >= 25 },
+    { id: 'ev1',    emoji: '📡', name: 'Copy That',           desc: 'Accept a field order.',            test: (s) => s.events >= 1 },
+    { id: 'ev10',   emoji: '📻', name: 'Radio Operator',      desc: 'Accept 10 field orders.',          test: (s) => s.events >= 10 },
+    { id: 'perk1',  emoji: '🛒', name: 'Requisition Form',    desc: 'Buy your first perk with Honors.', test: (s) => Object.keys(s.perks || {}).length >= 1 },
+    { id: 'auto1',  emoji: '🤖', name: 'Hands Off',           desc: 'Unlock the Auto-Recruiter.',       test: (s) => perkLvl(s, 'auto') >= 1 },
+    { id: 'day7',   emoji: '📅', name: 'Regular',             desc: 'Visit on 7 different days.',       test: (s) => s.daily && s.daily.served >= 7 },
+    { id: 'day30',  emoji: '🗓️', name: 'Dedicated',           desc: 'Visit on 30 different days.',      test: (s) => s.daily && s.daily.served >= 30 },
+    { id: 'time1',  emoji: '⏱️', name: 'Long Shift',          desc: 'Spend 1 hour playing.',            test: (s) => s.playSecs >= 3600 }
   ];
 
   /* ---- story lines, shown as your total earnings grow ---- */
@@ -104,17 +145,18 @@
   ];
 
   /* ---- math ---- */
-  const unitCost = (i, owned, n) => {
+  const unitCost = (i, owned, n, disc) => {
     n = n || 1;
-    return UNITS[i].base * Math.pow(GROWTH, owned) * (Math.pow(GROWTH, n) - 1) / (GROWTH - 1);
+    return UNITS[i].base * Math.pow(GROWTH, owned) * (Math.pow(GROWTH, n) - 1) / (GROWTH - 1) * (disc || 1);
   };
-  function maxAffordable(i, owned, sp) {
-    const first = UNITS[i].base * Math.pow(GROWTH, owned);
+  function maxAffordable(i, owned, sp, disc) {
+    const first = UNITS[i].base * Math.pow(GROWTH, owned) * (disc || 1);
     if (sp < first) return 0;
     let n = Math.floor(Math.log((sp * (GROWTH - 1)) / first + 1) / Math.log(GROWTH));
-    while (n > 0 && unitCost(i, owned, n) > sp) n--;
+    while (n > 0 && unitCost(i, owned, n, disc) > sp) n--;
     return n;
   }
+  const nextMilestone = (owned) => MILESTONES.find((m) => m > owned) || null;
   const achCount = (s) => Object.keys(s.ach).length;
   function unitMult(s, i) {
     let m = 1;
@@ -123,8 +165,13 @@
     return m;
   }
   const medalMult = (s) => (1 + MEDAL_BONUS * s.medals) * (1 + ACH_BONUS * achCount(s));
+  const buffProd = (s) => (s.buff && s.buff.end > Date.now() ? s.buff.prod : 1);
+  const buffTap = (s) => (s.buff && s.buff.end > Date.now() ? s.buff.tap : 1);
+  const costMult = (s) => 1 - 0.04 * perkLvl(s, 'quart');
+  const offlineEff = (s) => OFFLINE_EFFICIENCY + 0.1 * perkLvl(s, 'leave');
+  const offlineCapHours = (s) => OFFLINE_CAP_HOURS + 2 * perkLvl(s, 'long');
   function globalMult(s) {
-    let m = medalMult(s);
+    let m = medalMult(s) * buffProd(s);
     for (const u of UPGRADES) if (s.ups[u.id] && u.effect.type === 'global') m *= u.effect.mult;
     return m;
   }
@@ -140,7 +187,7 @@
       if (u.effect.type === 'tap') mult *= u.effect.mult;
       if (u.effect.type === 'tapPct') pct += u.effect.pct;
     }
-    return mult * medalMult(s) + sps(s) * pct;
+    return (mult * medalMult(s) * (1 + 0.4 * perkLvl(s, 'dsgt')) + sps(s) * pct) * buffTap(s);
   }
   const promotionGain = (run) => Math.floor(Math.sqrt(run / PROMO_DIV));
   function rankFor(medals) {
@@ -173,12 +220,17 @@
     return {
       sp: 0, run: 0, life: 0, units: UNITS.map(() => 0), ups: {}, medals: 0, promos: 0, taps: 0, crates: 0,
       missionsDone: 0, mission: null, ach: {}, log: [], seen: 0, buy: 1,
-      set: { haptics: true, sound: false }, last: Date.now()
+      honors: 0, honorsSpent: 0, perks: {}, buff: null, events: 0, milestones: 0,
+      playSecs: 0, runSecs: 0, bestRun: 0, bestSps: 0, bestTap: 0, fastestPromo: 0, firstPlay: Date.now(),
+      daily: { last: '', served: 0 },
+      set: { haptics: true, sound: false, pack: 'arcade', vol: 0.6, hlevel: 2, theme: 'default', compact: false, autoBuy: true, autoMission: true },
+      last: Date.now()
     };
   }
 
   return {
-    UNITS, UPGRADES, RANKS, MISSIONS, ACHIEVEMENTS, DISPATCHES, MILESTONES,
+    UNITS, UPGRADES, RANKS, MISSIONS, ACHIEVEMENTS, DISPATCHES, MILESTONES, PERKS, EVENTS, DAILY_SECS,
+    perkLvl, costMult, offlineEff, offlineCapHours, nextMilestone,
     GROWTH, PROMO_DIV, MEDAL_BONUS, ACH_BONUS, OFFLINE_EFFICIENCY, OFFLINE_CAP_HOURS,
     unitCost, maxAffordable, unitMult, globalMult, sps, tapValue, promotionGain, rankFor, nextRank,
     missionReward, fmt, fmtTime, freshState, achCount
