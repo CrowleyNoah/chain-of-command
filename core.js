@@ -7,6 +7,7 @@
 
   const GROWTH = 1.15;               // each unit you buy costs 15% more than the last
   const PROMO_DIV = 2e6;             // first promotion at 2 million supplies earned in a run
+  const PROMO_EXP = 3.5;            // medal n needs 2M x n^3.5 supplies earned in total, so every medal is harder than the last
   const MEDAL_BONUS = 0.10;          // each medal = +10% to everything
   const ACH_BONUS = 0.02;            // each achievement = +2% to everything
   const OFFLINE_EFFICIENCY = 0.5;    // troops produce half while you're away
@@ -189,7 +190,9 @@
     }
     return (mult * medalMult(s) * (1 + 0.4 * perkLvl(s, 'dsgt')) + sps(s) * pct) * buffTap(s);
   }
-  const promotionGain = (run) => Math.floor(Math.sqrt(run / PROMO_DIV));
+  const medalsAt = (life) => Math.floor(Math.pow(Math.max(0, life) / PROMO_DIV, 1 / PROMO_EXP) + 1e-9);
+  const lifeForMedal = (n) => PROMO_DIV * Math.pow(n, PROMO_EXP);
+  const promotionGain = (s) => Math.max(0, medalsAt(s.life) - s.medals);
   function rankFor(medals) {
     let r = RANKS[0];
     for (const x of RANKS) if (medals >= x.medals) r = x;
@@ -231,7 +234,7 @@
   return {
     UNITS, UPGRADES, RANKS, MISSIONS, ACHIEVEMENTS, DISPATCHES, MILESTONES, PERKS, EVENTS, DAILY_SECS,
     perkLvl, costMult, offlineEff, offlineCapHours, nextMilestone,
-    GROWTH, PROMO_DIV, MEDAL_BONUS, ACH_BONUS, OFFLINE_EFFICIENCY, OFFLINE_CAP_HOURS,
+    GROWTH, PROMO_DIV, PROMO_EXP, medalsAt, lifeForMedal, MEDAL_BONUS, ACH_BONUS, OFFLINE_EFFICIENCY, OFFLINE_CAP_HOURS,
     unitCost, maxAffordable, unitMult, globalMult, sps, tapValue, promotionGain, rankFor, nextRank,
     missionReward, fmt, fmtTime, freshState, achCount
   };

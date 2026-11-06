@@ -25,17 +25,25 @@
     return s;
   }
   let S = load();
-  function save() { S.last = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked */ } }
+  if (window.Cloud) Cloud.init({
+    app: 'chain-of-command',
+    read: () => { try { return localStorage.getItem(SAVE_KEY); } catch (e) { return null; } },
+    write: (s) => { window.cocNoSave = true; try { localStorage.setItem(SAVE_KEY, s); } catch (e) { /* ignore */ } },
+    score: (s) => { try { const o = JSON.parse(s); return (o.playSecs || 0) + (o.taps || 0) / 10; } catch (e) { return 0; } },
+    describe: (s) => { try { const o = JSON.parse(s); return (o.medals || 0) + ' medals, ' + (o.promos || 0) + ' promotions'; } catch (e) { return 'empty'; } }
+  });
+  function save() { if (window.cocNoSave) return; S.last = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked */ } }
 
   /* ---------------- themes ---------------- */
   const THEMES = {
     default: null,
+    olive:    { bg: '#0a0e09', panel: '#121a10', panel2: '#1a2517', line: '#26351f', text: '#e9edd9', dim: '#8d9a78', accent: '#9bbf3a', accentText: '#0b1205', tan: '#d9c68f', danger: '#d9644a' },
     desert:   { bg: '#14100a', panel: '#1e1810', panel2: '#2a2216', line: '#3a3020', text: '#f1e8d0', dim: '#a39673', accent: '#e0a93b', accentText: '#1a1204', tan: '#e8d7a8', danger: '#d9644a' },
     navy:     { bg: '#070b14', panel: '#0e1626', panel2: '#15213a', line: '#1f2f4d', text: '#e3ebf7', dim: '#7d90b0', accent: '#4aa3ff', accentText: '#04101f', tan: '#b7cdee', danger: '#e0645a' },
     arctic:   { bg: '#0b1113', panel: '#121d20', panel2: '#1a2a2e', line: '#25393e', text: '#e6f3f4', dim: '#84a3a8', accent: '#5fd1cf', accentText: '#04191a', tan: '#bfe3e0', danger: '#e0735a' },
     midnight: { bg: '#0a0a0a', panel: '#141414', panel2: '#1d1d1d', line: '#2b2b2b', text: '#ececec', dim: '#8a8a8a', accent: '#e0443a', accentText: '#1a0402', tan: '#d8b9a0', danger: '#ff7a6a' }
   };
-  const THEME_NAMES = { default: 'Olive', desert: 'Desert', navy: 'Navy', arctic: 'Arctic', midnight: 'Midnight' };
+  const THEME_NAMES = { default: 'Vivid', olive: 'Olive', desert: 'Desert', navy: 'Navy', arctic: 'Arctic', midnight: 'Midnight' };
   function applyLook() {
     const th = THEMES[S.set.theme] || CFG.theme || {};
     Object.entries(th).forEach(([k, v]) => document.documentElement.style.setProperty('--' + k, v));
@@ -127,11 +135,11 @@
   function buildUnits() {
     const box = $('units'); box.innerHTML = ''; unitEls.length = 0;
     C.UNITS.forEach((u, i) => {
-      const card = el('button', 'card buyable');
-      card.innerHTML = '<div class="emoji">' + u.emoji + '</div><div class="info"><b>' + u.name + '</b><small class="desc">' + u.desc + '</small><small class="rate"></small><small class="ms"></small><div class="msbar"><i></i></div></div><div class="right"><div class="owned">0</div><div class="cost"></div></div>';
+      const card = el('button', 'card buyable'); card.style.setProperty('--h', (i * 36 + 100) % 360);
+      card.innerHTML = '<i class="fill"></i><div class="emoji">' + u.emoji + '</div><div class="info"><b>' + u.name + '</b><small class="desc">' + u.desc + '</small><small class="rate"></small><small class="ms"></small><div class="msbar"><i></i></div></div><div class="right"><div class="owned">0</div><div class="cost"></div></div>';
       card.onclick = () => buyUnit(i);
       box.appendChild(card);
-      unitEls.push({ card, owned: card.querySelector('.owned'), cost: card.querySelector('.cost'), rate: card.querySelector('.rate'), ms: card.querySelector('.ms'), msbar: card.querySelector('.msbar i') });
+      unitEls.push({ fill: card.querySelector('.fill'), card, owned: card.querySelector('.owned'), cost: card.querySelector('.cost'), rate: card.querySelector('.rate'), ms: card.querySelector('.ms'), msbar: card.querySelector('.msbar i') });
     });
   }
   function buyCount(i) {
@@ -180,7 +188,7 @@
       const n = S.buy === 'max' ? Math.max(1, C.maxAffordable(i, S.units[i], S.sp, disc())) : buyCount(i);
       const cost = C.unitCost(i, S.units[i], n, disc());
       const can = cost <= S.sp;
-      e.card.classList.toggle('can', can);
+      e.card.classList.toggle('can', can); e.fill.style.width = Math.min(100, S.sp / Math.max(1, cost) * 100).toFixed(0) + '%';
       e.owned.textContent = S.units[i];
       e.cost.textContent = (n > 1 ? 'x' + n + ' · ' : '') + fmt(Math.ceil(cost));
       e.rate.textContent = fmt(per(i), per(i) < 10 ? 1 : 0) + ' each/sec' + (S.units[i] ? ' · ' + fmt(per(i) * S.units[i]) + ' total' : '');
@@ -353,6 +361,9 @@
     look.appendChild(sw('Compact layout (smaller cards, more on screen)', 'compact', applyLook));
     box.appendChild(look);
 
+    box.appendChild(el('h3', '', 'Cloud save'));
+    const cl = el('div', 'panel'); const cb = el('button', 'btn', 'Cloud save'); cb.onclick = () => { if (window.Cloud) Cloud.open(); }; cl.appendChild(cb); box.appendChild(cl);
+
     box.appendChild(el('h3', '', 'Sound and feel'));
     const set = el('div', 'panel');
     set.appendChild(sw('Vibration', 'haptics'));
@@ -394,14 +405,16 @@
     r3.appendChild(rst); sv.appendChild(r3);
     box.appendChild(sv);
   }
+  function promoPct() { const a = C.lifeForMedal(S.medals), b = C.lifeForMedal(S.medals + 1); return Math.max(0, Math.min(100, (S.life - a) / (b - a) * 100)); }
   function panePromo(box) {
     const nr = C.nextRank(S.medals);
-    const gainM = C.promotionGain(S.run);
+    const gainM = C.promotionGain(S);
     box.appendChild(el('h3', '', 'Promotion'));
     const p = el('div', 'panel');
     p.innerHTML = '<div class="promo-big"><b>' + callsign() + '</b> · ' + S.medals + ' medals · +' + Math.round(S.medals * C.MEDAL_BONUS * 100) + '% to everything<br>' +
       (nr ? '<span class="dim">Next rank: ' + nr.title + ' at ' + nr.medals + ' medals</span>' : '<span class="dim">Highest rank reached. Legend.</span>') + '<br><br>' +
-      (gainM >= 1 ? 'Ready to be promoted for <b style="color:var(--accent)">+' + gainM + ' medal' + (gainM > 1 ? 's' : '') + ' and ' + gainM + ' Honor' + (gainM > 1 ? 's' : '') + '</b>.' : 'Earn <b>' + fmt(C.PROMO_DIV) + '</b> supplies in one tour to earn your first medal (this tour: ' + fmt(S.run) + ').') +
+      (gainM >= 1 ? 'Ready to be promoted for <b style="color:var(--accent)">+' + gainM + ' medal' + (gainM > 1 ? 's' : '') + ' and ' + gainM + ' Honor' + (gainM > 1 ? 's' : '') + '</b>.' : 'Next medal at <b>' + fmt(C.lifeForMedal(S.medals + 1)) + '</b> supplies earned in total. Each medal costs more than the last.') +
+      '<div class="bar fat"><i style="width:' + promoPct() + '%"></i></div><div class="dim" style="font-size:12.5px;margin-top:4px">' + fmt(S.life) + ' / ' + fmt(C.lifeForMedal(S.medals + 1)) + ' earned in total</div>' +
       '<br><span class="dim" style="font-size:13px">Promotion resets your supplies, troops and gear. You keep your medals, Honors, perks, collection and rank.</span></div>';
     const pb = el('button', 'btn', 'Get promoted'); pb.disabled = gainM < 1;
     pb.onclick = () => showModal('<h2>Request promotion?</h2>You will gain <b>' + gainM + '</b> medal' + (gainM > 1 ? 's' : '') + ' and ' + gainM + ' Honor' + (gainM > 1 ? 's' : '') + ', and start a new tour from the bottom.', [['Not yet', null, 'ghost'], ['Promote me', doPromote]]);
@@ -412,7 +425,7 @@
     box.appendChild(log);
   }
   function doPromote() {
-    const g = C.promotionGain(S.run); if (g < 1) return;
+    const g = C.promotionGain(S); if (g < 1) return;
     const before = rank();
     S.bestRun = Math.max(S.bestRun, S.run);
     if (!S.fastestPromo || S.runSecs < S.fastestPromo) S.fastestPromo = S.runSecs;
@@ -542,7 +555,8 @@
     }
   }
   function updateHeader() {
-    $('rank').textContent = callsign();
+    $('rank').textContent = callsign() + ' · ' + S.medals + ' ★';
+    const rb = $('rankbar'); if (rb) rb.style.width = promoPct().toFixed(1) + '%';
     $('sp').textContent = fmt(S.sp);
     $('sps').textContent = fmt(C.sps(S), C.sps(S) < 10 ? 1 : 0) + ' supplies / sec';
     $('tapval').textContent = '+' + fmt(C.tapValue(S)) + ' per drill';
@@ -559,5 +573,5 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(); else { tick(); checkDaily(); } });
   window.addEventListener('pagehide', save);
   scheduleCrate();
-  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) { const had = !!navigator.serviceWorker.controller; navigator.serviceWorker.addEventListener('controllerchange', () => { if (had) location.reload(); }); navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => { const chk = () => { try { reg.update(); } catch (e) { /* ignore */ } }; document.addEventListener('visibilitychange', () => { if (!document.hidden) chk(); }); setInterval(chk, 300000); }).catch(() => { /* offline support is optional */ }); }
 })();

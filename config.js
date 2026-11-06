@@ -2,8 +2,8 @@
 window.GAME_CONFIG = {
   name: 'Noah',            // your callsign: shows up as "Sgt. Noah"
   theme: {
-    bg: '#0a0e09', panel: '#121a10', panel2: '#1a2517', line: '#26351f',
-    text: '#e9edd9', dim: '#8d9a78', accent: '#9bbf3a', accentText: '#0b1205',
-    tan: '#d9c68f', danger: '#d9644a'
+    bg: '#060b14', panel: '#0d1830', panel2: '#132548', line: '#25427a',
+    text: '#f2f6ff', dim: '#93a9d6', accent: '#2dff8f', accentText: '#03140b',
+    tan: '#ffd23f', danger: '#ff4d6d'
   }
 };

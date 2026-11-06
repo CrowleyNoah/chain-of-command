@@ -132,3 +132,53 @@ body.compact .info .desc, body.compact .info .rate { display:none; }
 body.compact .owned { font-size:21px; }
 body.compact #drill { width:min(50vw, 220px); }
 body.compact .modes { margin-bottom:8px; }
+
+/* ---- v4: vivid look ---- */
+:root { --c2:#35e0ff; --c3:#ff8a2b; --c4:#ff4fd8; --c5:#8f6bff; }
+body { background:radial-gradient(120% 60% at 50% -10%, color-mix(in srgb, var(--c5) 22%, var(--bg)), var(--bg) 60%); }
+header { background:linear-gradient(180deg, color-mix(in srgb, var(--c5) 30%, var(--panel)), var(--bg)); border-bottom:1px solid color-mix(in srgb, var(--c2) 45%, var(--line)); box-shadow:0 6px 24px color-mix(in srgb, var(--c2) 12%, transparent); }
+#rank { color:var(--tan); text-shadow:0 0 12px color-mix(in srgb, var(--tan) 60%, transparent); }
+.rankbarwrap { height:6px; width:min(70%, 260px); margin:6px auto 0; border-radius:99px; background:color-mix(in srgb, var(--bg) 70%, #000); overflow:hidden; }
+#rankbar { height:100%; width:0; border-radius:99px; background:linear-gradient(90deg, var(--tan), var(--c3), var(--c4)); box-shadow:0 0 10px var(--c3); transition:width .4s; }
+#sp { background:linear-gradient(180deg, #fff, var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 55%, transparent)); }
+#sps { color:var(--c2); font-weight:700; }
+#drill { background:radial-gradient(circle at 35% 28%, #fff 0%, color-mix(in srgb, var(--accent), #fff 35%) 12%, var(--accent) 42%, color-mix(in srgb, var(--accent), var(--c2) 60%) 100%); box-shadow:0 0 0 7px var(--panel2), 0 0 0 10px var(--accent), 0 0 34px 8px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 80px 20px color-mix(in srgb, var(--c2) 22%, transparent); animation:breathe 2.6s ease-in-out infinite; }
+#drill.hit, #drill:active { animation:none; transform:scale(.94); box-shadow:0 0 0 7px var(--panel2), 0 0 0 10px #fff, 0 0 50px 14px var(--accent); }
+@keyframes breathe { 50% { box-shadow:0 0 0 7px var(--panel2), 0 0 0 10px var(--accent), 0 0 48px 14px color-mix(in srgb, var(--accent) 70%, transparent), 0 0 100px 28px color-mix(in srgb, var(--c2) 30%, transparent); } }
+.floater { color:#fff; text-shadow:0 0 8px var(--accent), 0 2px 3px #000; font-size:22px; }
+.dispatch { border-left:4px solid var(--c3); background:linear-gradient(90deg, color-mix(in srgb, var(--c3) 14%, var(--panel)), var(--panel)); }
+/* cards */
+.card { position:relative; overflow:hidden; background:linear-gradient(135deg, var(--panel2), var(--panel)); border:1px solid var(--line); }
+.card > * { position:relative; z-index:1; }
+.card .fill { position:absolute; z-index:0; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg, color-mix(in srgb, hsl(var(--h,140) 90% 55%) 30%, transparent), color-mix(in srgb, hsl(var(--h,140) 90% 55%) 8%, transparent)); transition:width .25s; pointer-events:none; }
+.card.buyable.can { border-color:hsl(var(--h,140) 95% 60%); box-shadow:0 0 0 1px hsl(var(--h,140) 95% 60%), 0 0 18px color-mix(in srgb, hsl(var(--h,140) 95% 60%) 45%, transparent); background:linear-gradient(135deg, color-mix(in srgb, hsl(var(--h,140) 80% 50%) 22%, var(--panel2)), var(--panel)); }
+.card.buyable:not(.can) { opacity:.8; }
+.emoji { background:linear-gradient(145deg, hsl(var(--h,140) 90% 58%), hsl(calc(var(--h,140) + 40) 85% 40%)); box-shadow:inset 0 2px 0 rgba(255,255,255,.35), 0 4px 10px rgba(0,0,0,.4); width:50px; height:50px; font-size:32px; border-radius:14px; }
+.owned { font-size:30px; color:#fff; text-shadow:0 0 12px hsl(var(--h,140) 95% 60%); }
+.cost { font-size:14px; color:hsl(var(--h,140) 95% 70%); }
+.card:not(.can) .cost { color:var(--dim); }
+.msbar { height:6px; background:color-mix(in srgb, var(--bg) 80%, #000); }
+.msbar i { background:linear-gradient(90deg, var(--tan), var(--c3)); box-shadow:0 0 8px var(--c3); }
+.bar { height:10px; background:color-mix(in srgb, var(--bg) 75%, #000); }
+.bar i { background:linear-gradient(90deg, var(--accent), var(--c2)); box-shadow:0 0 10px var(--accent); }
+.bar.fat { height:16px; margin-top:12px; }
+.bar.fat i { background:linear-gradient(90deg, var(--c5), var(--c4), var(--c3), var(--tan)); box-shadow:0 0 14px var(--c4); }
+.btn { background:linear-gradient(180deg, color-mix(in srgb, var(--accent), #fff 22%), var(--accent)); box-shadow:0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 0 rgba(255,255,255,.5); }
+.btn.ghost { background:var(--panel2); box-shadow:none; }
+.chip.on { background:linear-gradient(180deg, color-mix(in srgb, var(--accent), #fff 20%), var(--accent)); box-shadow:0 0 14px color-mix(in srgb, var(--accent) 50%, transparent); }
+h3 { color:var(--c2); text-shadow:0 0 10px color-mix(in srgb, var(--c2) 45%, transparent); }
+.panel { background:linear-gradient(135deg, var(--panel2), var(--panel)); border-color:color-mix(in srgb, var(--c5) 40%, var(--line)); }
+.badge.done { border-color:var(--tan); background:linear-gradient(160deg, color-mix(in srgb, var(--tan) 20%, var(--panel2)), var(--panel)); box-shadow:0 0 14px color-mix(in srgb, var(--tan) 28%, transparent); }
+.badge i { filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+.event { background:linear-gradient(90deg, color-mix(in srgb, var(--c4) 24%, var(--panel2)), var(--panel2)); border-color:var(--c4); }
+.buff { background:linear-gradient(90deg, var(--c3), var(--tan)); color:#1a0d00; box-shadow:0 0 14px color-mix(in srgb, var(--c3) 55%, transparent); }
+nav { background:linear-gradient(0deg, var(--bg), color-mix(in srgb, var(--c5) 14%, var(--bg))); border-top:1px solid color-mix(in srgb, var(--c2) 40%, var(--line)); }
+nav button { position:relative; }
+nav button i { filter:none; opacity:.75; font-size:22px; }
+nav button.on { color:var(--accent); }
+nav button.on i { opacity:1; transform:translateY(-2px) scale(1.15); filter:drop-shadow(0 0 8px var(--accent)); transition:.15s; }
+nav button.on::before { content:""; position:absolute; top:0; left:25%; right:25%; height:3px; border-radius:0 0 4px 4px; background:var(--accent); box-shadow:0 0 12px var(--accent); }
+#toast { border-color:var(--c2); box-shadow:0 0 20px color-mix(in srgb, var(--c2) 40%, transparent); }
+#modal .box { border-color:var(--c4); box-shadow:0 0 40px color-mix(in srgb, var(--c4) 35%, transparent); background:linear-gradient(160deg, var(--panel2), var(--panel)); }
+.dailypips i.on { box-shadow:0 0 10px var(--accent); }
+#drill .lbl { color:var(--accentText); }
